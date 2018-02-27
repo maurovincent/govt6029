@@ -1,0 +1,132 @@
+---
+title: "hw1_Mauro"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(dplyr)
+democracy <- read.csv("democracy.csv", stringsAsFactors = FALSE, na.strings = ".")
+```
+
+## Initial Data Exploration
+
+A summary of all variables in the democracy dataset:
+```{r}
+summary(democracy)
+
+```
+
+Histogram of 'Political Liberties'
+
+```{r}
+hist(democracy$POLLIB, xlab = "Political Liberties", main = "Histogram of Political Liberties")
+```
+
+Historgram of 'GDP per capita'
+
+```{r}
+hist(democracy$GDPW, xlab = "GDP per capita", main = "Histogram of GDP per capita")
+```
+
+Histogram of the log of 'GDP per capita.' The difference is that the log of GDP per capita makes the data more evenly distributed. 
+
+```{r}
+hist(log10(democracy$GDPW), xlab = "GDP per capita(log)", main = "Histogram of GDP per capita (log)")
+```
+
+## Exploring the Relationships
+
+Scatterplot of 'Politics Liberties' and 'GDP per capita'
+
+```{r}
+plot(democracy$POLLIB, democracy$GDPW, xlab = "Political Liberties", ylab = "GDP per capita")
+ggplot(democracy, aes(x = POLLIB, y = GDPW)) + 
+  geom_point() + 
+  geom_jitter(width = 0) +
+  labs(x = "Political Liberties", y = "GDP per capita")
+```
+
+Scatterplot of 'Political Liberties' and 'GDP per capita(log).' The logged distribution has less skew at the top end of the distribution (higher GDP per capita).
+
+```{r}
+ggplot(democracy, aes(x = POLLIB, y = log10(GDPW))) + 
+  geom_point() + 
+  geom_jitter(width = 0) +
+  labs(x = "Political Liberties", y = "GDP per capita")
+```
+
+Boxplot of 'GDP per capita' for both oil and non-oil producing countries
+
+```{r}
+nooil <- cbind(democracy$OIL==0)
+       
+ggplot(democracy, aes(x=nooil, y=GDPW)) +
+  geom_boxplot() +
+  labs(y = "GDP per capita", x = "Oil Producing")
+```
+
+## Transforming and Analyzing Data
+
+Mean 'GDP per capita' of Catholic countries. The mean GDP of countries with greater than 40 percent of Catholics is lower than the mean GDP of all global countries.
+
+```{r}
+mean(democracy$GDPW)
+
+cathmean <- democracy %>% filter(CATH >= 40) %>% select(GDPW) %>% glimpse()
+summary(cathmean)
+```
+
+Mean 'GDP per capita' of differing ethnolinguistic fractionalization levels among countries.
+
+```{r}
+lingomean <- democracy %>% filter(ELF60 > .60) %>% select(GDPW) %>% glimpse()
+summary(lingomean)
+
+lingomean2 <- democracy %>% filter(ELF60 < .60) %>% select(GDPW) %>% glimpse()
+summary(lingomean2)
+
+lingomean3 <- democracy %>% filter(is.na(ELF60)) %>% select(GDPW) %>% glimpse()
+summary(lingomean3)
+```
+
+Median of the average years of education in all countries in 1985
+
+```{r}
+demoeducation <- democracy %>% filter(YEAR == 1985) %>% glimpse()
+summary(demoeducation$EDT)
+```
+
+
+The closest country to the median (Venezuela)
+
+```{r}
+democracy %>% filter(EDT == 5.625 & YEAR == 1985) %>% glimpse()
+```
+
+
+Median of the average years of education among democracies in 1985
+
+```{r}
+demoeducation2 <- democracy %>% filter(YEAR == 1985 & REG == 1) %>% glimpse()
+summary(demoeducation2$EDT)
+```
+
+The closest country to the median (Mauritius)
+
+```{r}
+democracy %>% filter(EDT == 7.805 & YEAR == 1985 & REG == 1) %>% glimpse()
+```
+
+The 25th and 75th percentiles of ethnolinguistic fractionalization in new and old countries
+
+```{r}
+frac <- democracy %>% filter(NEWC == 1) %>% glimpse() %>% select(ELF60)
+summary(frac)
+
+frac2 <- democracy %>% filter(NEWC == 0) %>% glimpse() %>% select(ELF60)
+summary(frac2)
+```
+
+
