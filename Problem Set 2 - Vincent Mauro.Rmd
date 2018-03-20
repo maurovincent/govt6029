@@ -1,0 +1,204 @@
+---
+title: "Problem Set 2"
+author: "Vincent Mauro"
+date: "March 14, 2018"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, warning = FALSE, message = FALSE}
+library(readr)
+library(ggplot2)
+library(dplyr)
+library(ggplot2)
+library(readxl)
+library(digest)
+sprinters <- read_csv("C:/Users/Vincent/Downloads/sprinters.csv")
+```
+
+#Problem 1:
+
+Calculating through a matrix
+
+```{r}
+sprinters$ones <- c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+x <- matrix(data = c(sprinters$ones, sprinters$year, sprinters$women), nrow = 42, ncol = 3, byrow = FALSE)
+y <- matrix(data = c(sprinters$finish), nrow = 42, ncol = 1)
+
+b <- (solve(t(x)%*%x)%*%t(x)%*%y)
+summary(b)
+```
+
+Regession of finish times for year and women
+
+```{r}
+reg1 <- lm(finish ~ year + women, data = sprinters)
+summary(reg1)
+```
+
+The minimum and median values from the matrix calculation are the same as the coefficients for the independent variables in the regression.
+
+Plotting the regression:
+
+```{r}
+ggplot(sprinters, aes(x = year, y = finish, color = women)) +
+  geom_point() +
+  labs(y = "Finish Time of 100m Dash", x = "Year") +
+  theme_bw() +
+  geom_smooth(method=lm, se = FALSE)
+```
+
+Regression with interaction effect:
+
+```{r}
+reg2 <- lm(finish ~ women*year, data = sprinters)
+summary(reg2)
+```
+
+Plotting the interaction effects:
+
+```{r}
+ggplot(reg2, aes(x = year , y = finish, 
+                         ymin = 9, ymax = 13,
+                         color = factor(sprinters$women),
+                         fill = factor(sprinters$women))) +
+  geom_line() + geom_point() +
+  labs(title = "Best Olympic Time in Meter Sprint by Year",
+       y = "Best Time in Seconds in the Meter Sprint",
+       x = "Year") + 
+  scale_fill_discrete(name = "Sex",
+                      labels=c("Men","Women")) +
+  scale_color_discrete(name = "Sex",
+                      labels=c("Men","Women")) +
+  theme_bw()
+```
+
+Predicting Values for 2001 Olympics:
+
+```{r}
+men <- predict(reg1, newdata = data_frame(year = 2001, women = 0), interval = "confidence", level = 0.95)
+summary(men)
+women <- predict(reg1, newdata = data_frame(year = 2001, women = 1), interval = "confidence", level = 0.95)
+summary(women)
+```
+
+If the olympics were to be held in 2001, the predicted value for the men would be 9.729 seconds (we can say with 95% confidence that it would fall between 9.608 to 9.851), while the women's time would be 10.82 seconds (10.71 to 10.93).
+
+Predicting Values for 2156 Olympics:
+
+```{r}
+men2156 <- predict(reg1, newdata = data_frame(year = 2156, women = 0), interval = "confidence", level = 0.95)
+summary(men2156)
+women2156 <- predict(reg1, newdata = data_frame(year = 2156, women = 1), interval = "confidence", level = 0.95)
+summary(women2156) 
+```
+
+As shown, in 2156, we predict men to finish in 7.777 seconds (7.358 - 8.192) and women 8.868 (8.477 - 9.259). 
+
+We can trust, to a much greater degree of certainty, the 2001 prediction because it is inline with the actual values between the olympics of 2000 and 2004. Furthermore, we should also expect that predictions made within, or near, to the years in the dataset will be more accurate than predictions made for far in the future. This is because the model expects a linear relationship, but we can expect this relationship to change over time because there is a limit to how fast humans can run (through natural means). 
+
+#Problem 2:
+
+```{r, warning = FALSE, message = FALSE}
+data("anscombe")
+library("tidyverse")
+anscombe2 <- anscombe %>%
+    mutate(obs = row_number()) %>%
+    gather(variable_dataset, value, - obs) %>%
+    separate(variable_dataset, c("variable", "dataset"), sep = 1L) %>%
+    spread(variable, value) %>%
+    arrange(dataset, obs)
+```
+
+Descriptive statistics of Anscombe:
+
+```{r}
+x1 <- cbind(anscombe$x1)
+x2 <- cbind(anscombe$x2)
+x3 <- cbind(anscombe$x3)
+x4 <- cbind(anscombe$x4)
+y1 <- cbind(anscombe$y1)
+y2 <- cbind(anscombe$y2)
+y3 <- cbind(anscombe$y3)
+y4 <- cbind(anscombe$y4)
+
+summary(anscombe)
+sd(x1)
+sd(x2)
+sd(x3)
+sd(x4)
+sd(y1)
+sd(y2)
+sd(y3)
+sd(y4)
+
+cor(x1, y1, method = c("pearson"))
+cor(x2, y2, method = c("pearson"))
+cor(x3, y3, method = c("pearson"))
+cor(x4, y4, method = c("pearson"))
+
+```
+
+
+Descriptive statistics of Anscombe2:
+
+```{r}
+summary(anscombe2)
+
+y <- cbind(anscombe2$y)
+x <- cbind(anscombe2$x)
+
+sd(x)
+sd(y)
+cor(x, y, method = c("pearson"))
+```
+
+Running regressions for both datasets:
+
+```{r}
+reg4 <- lm(y1 ~ x1, data = anscombe)
+summary(reg4)
+reg5 <- lm(y2 ~ x2, data = anscombe)
+summary(reg4)
+reg6 <- lm(y3 ~ x3, data = anscombe)
+summary(reg4)
+reg7 <- lm(y4 ~ x4, data = anscombe)
+summary(reg4)
+reg8 <- lm(y ~ x, data = anscombe2)
+summary(reg5)
+
+```
+
+Given the almost identical means, distributions, and medians of the datasets, we should expect very similar results.
+
+Plots:
+
+```{r}
+plotanscombe <- ggplot (anscombe2, aes(x, y))
+plotanscombe + geom_point() + facet_wrap(~dataset) + geom_smooth(method=lm, se = FALSE)
+```
+
+Although that the regression coefficients/line of best fit is remarkably similar, it shows that the datasets have very different relationships. Especially plot 3 and 4 show that the relationship is not linear. This is an issue in that we shouldn't assume that relationships are identical through regression alone; it's best to look at the data visually and compare.
+
+#Problem 3:
+
+I have built a cross-sectional time-series dataset covering 15 Latin American countries from 1990-2015. The dataset includes 101 variables, but my variables of interest are party system institutionalization, strength of left, democracy, and inequality. There are also a number of other political, economic, demographic, and poverty variables that can potentially serve as either independent or control variables. Nearly all the variables are continuous, although there are some dummy variables as well. Yes, the data can be read in R, it has been compiled in both csv and excel formats.
+
+The following tables outline the variation in inequality (as measured by Gini) in the 15 countries from 1990-2015. The inequality variable is a Gini index measured by household income per capita and standardized to the Luxembourg Income Study. The distribution is varied; across the 15 countries, most Latin American have high Ginis (there is varying degrees of how high), but within country variation reveals that some countries have decreased in inequality over the last two and a half decades (e.g. Brazil, Chile, and El Salvador), while others have increased (e.g. Costa Rica, Paraguay, and Peru). The pace of these changes are also varied; some have been gradual and consistent while others have seen dramatic changes in both positive and negative directions. The inequality variable is continuous.
+
+```{r, warning = FALSE, message = FALSE}
+Dataset <- read_excel("C:/Users/Vincent/Desktop/Working Papers/Party Systems, Elections, and Inequality/Data/Data/Dataset.xlsx")
+
+Inequality <- cbind(Dataset$i2)
+
+ggplot(Dataset, aes(x = Year, y = Inequality)) +
+  geom_point() +
+  facet_wrap(~ Country) +
+  theme_bw()
+```
+
+Standard potential issues for using OLS on panel data apply. First, there is some trend in the data, inequality is highly correlated to previous year (or multiple previous years) inequality. Tied to this, there may be autocorrelation issues. The errors may be strongly correlated across time periods. There also may be some slight multicollinearity issues between the independent variables of interest; democracy, party system development, and the strength of left usually go hand-in-hand. But this is a much smaller issue than the previous two.
